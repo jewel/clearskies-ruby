@@ -55,7 +55,7 @@ gem install rb-inotify ffi
 Clone this repo:
 
 ```bash
-git clone https://github.com/jewel/clearskies
+git clone https://github.com/jewel/clearskies-ruby
 ```
 
 To start and share a directory:
