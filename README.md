@@ -61,7 +61,7 @@ git clone https://github.com/jewel/clearskies-ruby
 To start and share a directory:
 
 ```bash
-cd clearskies
+cd clearskies-ruby
 ./clearskies start # add --no-fork to run in foreground
 ./clearskies share ~/important-stuff --mode=read-write
 ```
