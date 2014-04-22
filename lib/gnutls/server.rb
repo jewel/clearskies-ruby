@@ -1,8 +1,8 @@
 class GnuTLS::Server < GnuTLS::Session
-  def initialize socket, psk
+  def initialize socket, username, password
     ptr = GnuTLS.init GnuTLS::SERVER
     super ptr, :server
-    self.psk = psk
+    self.creds = [username, password]
     self.socket = socket
   end
 end
