@@ -1,4 +1,5 @@
 require_relative '../buffered_io'
+require 'securerandom'
 
 class GnuTLS::Session
   include BufferedIO
@@ -6,19 +7,22 @@ class GnuTLS::Session
   def initialize ptr, direction
     @session = ptr
     @direction = direction
-    # FIXME this isn't quite the right priority string
-    self.priority = "SECURE128:-VERS-SSL3.0:-VERS-TLS1.0:-ARCFOUR-128:+PSK:+DHE-PSK"
-    # FIXME create ephemeral DH parameters and force DHE mode
+    self.priority = "PFS:+SRP"
     @buffer = String.new
+  end
+
+  def bye
+    GnuTLS.bye @session, :shut_rdrw
   end
 
   def handshake
     loop do
       res = GnuTLS.handshake(@session)
+      $stderr.puts "successful handshake" if res == 0
       return if res == 0
 
-      if GnuTLS.error_is_fatal(res)
-        raise GnuTLS::Error.new("failed handshake", res) unless res.zero?
+      if GnuTLS.error_is_fatal(res) != 0
+        raise GnuTLS::Error.new("failed handshake #{res}", res) unless res.zero?
       else
         warn "handshake problem (status #{res})" unless res.zero?
       end
@@ -62,11 +66,14 @@ class GnuTLS::Session
     handshake
   end
 
-  def psk= val
+  def creds= mycreds
+    username,password = mycreds
     creds = nil
 
+ 
+
     FFI::MemoryPointer.new :pointer do |creds_out|
-      allocator = "psk_allocate_#{@direction}_credentials"
+      allocator = "srp_allocate_#{@direction}_credentials"
 
       res = GnuTLS.send allocator, creds_out
       raise "Cannot allocate credentials" unless res == 0
@@ -75,33 +82,50 @@ class GnuTLS::Session
     end
 
     if @direction == :client
-      psk = GnuTLS::Datum.new
-      @psk_data = psk[:data] = str_to_buffer val
-      psk[:size] = val.size
+      setter = "srp_set_#{@direction}_credentials"
 
-      setter = "psk_set_#{@direction}_credentials"
-
-      res = GnuTLS.send setter, creds, "Bogus", psk, :PSK_KEY_RAW
+      res = GnuTLS.send setter, creds, username, password
       raise "Can't #{setter}" unless res == 0
     else
-      @server_creds_function = Proc.new { |_,username,key_pointer|
+      @server_creds_function = Proc.new { |_,verify_username,salt_p,verifier_p,generator_p,prime_p|
         # ignore username
+        begin
+          salt = GnuTLS::Datum.new salt_p
+          generator = GnuTLS::Datum.new generator_p
+          prime = GnuTLS::Datum.new prime_p
 
-        psk = GnuTLS::Datum.new key_pointer
-        psk[:data] = GnuTLS::LibC.malloc val.size
-        psk[:data].write_bytes val, 0, val.size
-        psk[:size] = val.size
+          #FIXME How long should this salt be???
+          salt_s = SecureRandom.random_bytes 8
+          salt[:data] = GnuTLS::LibC.malloc salt_s.size
+          salt[:data].write_bytes salt_s, 0, salt_s.size
+          salt[:size] = salt_s.size
 
-        0
+          generator.copy GnuTLS.srp_2048_group_generator
+          prime.copy GnuTLS.srp_2048_group_prime
+
+          err = GnuTLS.srp_verifier username, password, salt, generator, prime, verifier_p
+          raise "Can't create verifier" unless err == 0
+
+        rescue
+          # FIXME Bubble exception back to C code somehow
+          warn "EXCEPTION in callback: #$!"
+          exit -1
+        end
+
+        if username == verify_username.to_s
+          0
+        else
+          -1
+        end
       }
 
-      GnuTLS.psk_set_server_credentials_function creds, @server_creds_function
+      GnuTLS.srp_set_server_credentials_function creds, @server_creds_function
     end
 
-    res = GnuTLS.credentials_set @session, :CRD_PSK, creds
-    raise "Can't credentials_set with PSK" unless res == 0
+    res = GnuTLS.credentials_set @session, :crd_srp, creds
+    raise "Can't credentials_set with SRP" unless res == 0
 
-    val
+    [username, password]
   end
 
   def write str
