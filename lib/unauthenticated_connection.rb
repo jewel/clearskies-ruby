@@ -174,7 +174,8 @@ class UnauthenticatedConnection < Connection
   def start_encryption
     @tcp_socket = @socket
 
-    psk = (@code || @share).key :psk, @level
+    srp_password = (@code || @share).key :srp_password, @level
+    srp_username = (@code || @share).id
 
     if ENV['NO_ENCRYPTION']
       # For testing, perhaps because GnuTLS isn't available
@@ -188,9 +189,9 @@ class UnauthenticatedConnection < Connection
       end
     else
       @socket = if @incoming
-                  GnuTLS::Server.new @socket, psk
+                  GnuTLS::Server.new @socket, srp_username, srp_password
                 else
-                  GnuTLS::Socket.new @socket, psk
+                  GnuTLS::Socket.new @socket, srp_username, srp_password
                 end
     end
   end

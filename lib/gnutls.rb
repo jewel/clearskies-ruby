@@ -29,7 +29,7 @@ module GnuTLS
       ffi_lib lib
       loaded = true
       break
-    rescue loaderror
+    rescue 
     end
   end
   raise "cannot load gnutls" unless loaded

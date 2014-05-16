@@ -15,6 +15,7 @@ class AccessCode
   #
   # payload  -  a binary string containing the access code's key
   def initialize payload
+    # FIXME check the size
     @payload = payload
   end
 
@@ -53,7 +54,7 @@ class AccessCode
   # Get the ID of the access code.  This is similar to the "Share ID" of a
   # share, and is used to locate other nodes that have the same access code.
   def id
-    @id ||= Digest::SHA256.hexdigest(@payload)
+    @id ||= Digest::SHA256.hexdigest(@payload[0...@payload.size/2])
   end
 
   # Get base32 representation of the access code, for sharing with other
@@ -66,9 +67,9 @@ class AccessCode
   # access_level so that it behaves in a similar way to the Share class, but
   # the access_level of an AccessCode is always "unknown".
   def key type, access_level
-    raise "Invalid type" unless type == :psk
+    raise "Invalid type" unless type == :srp_password
     raise "Invalid access level" unless access_level == :unknown
-    @payload
+    @payload[@payload.size..-1]
   end
 
   # Get the access_level of the Access Code.  This is always "unknown", since
