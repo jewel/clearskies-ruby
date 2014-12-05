@@ -3,6 +3,11 @@ require_relative 'access_code'
 module Core
   def self.init(errors_callback)
     @errors_callback = errors_callback
+    @type_handlers = {} # must be initailized before calling register_type
+
+    # TODO register the core message handlers
+    self.register_type("core.greeting", "some handler")
+    # ... etc ...
     nil
   end
 
@@ -47,6 +52,7 @@ module Core
   # like '.com.testing.start', '.com.testing.end'
   def self.register_type(type_glob, message_handler)
     #TODO globs are not yet supported
-    #@type_handlers = 
+    $stderr.puts "Warning: overrode existing handler for #{type_glob}" if @type_handlers.has_key? type_glob
+    @type_handlers[type_glob] = message_handler
   end
 end
