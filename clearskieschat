@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+
+# This is a contrived chat application that has no other purpose than to
+# test the core parts of clearskies.  It would make a really lame instant
+# messaging program as is.
+
+### Start the first without any arguments.  Start the second with the accesscode as an argument.
+
+require_relative 'lib/core/core.rb'
+
+def error_handler(error)
+  raise error
+end
+
+Core.init(method(:error_handler))
+Core.start
+my_peerid = Core.create_club
+
+if access_code = ARGV.shift
+  Core.join_club(access_code)
+else
+  access_code = Core.generate_access_code my_peerid, :RW
+  puts "Please share this access_code with someone else!"
+  puts "Access code: #{access_code}"
+end
+
+
+loop do
+  if Core.list_peers(my_peerid).empty?
+    puts "No one else is there."
+    sleep 5
+    next
+  end
+
+  puts "Sending a message"
+  Core.send_message my_peerid, "Saying hello!"
+  sleep 3
+end
+
