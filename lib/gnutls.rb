@@ -24,7 +24,7 @@ module GnuTLS
 
   extend FFI::Library
   loaded = false
-  %w{/usr/local/lib/libgnutls.so gnutls gnutls.so.26 gnutls.so.28}.each do |lib|
+  %w{gnutls.so.28}.each do |lib|
     begin
       ffi_lib lib
       loaded = true
