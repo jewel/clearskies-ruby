@@ -34,14 +34,12 @@ class AccessCode
 
     raise "Fails Luhn_mod_N check" unless str
 
-    binary = Base32.decode str
-
-    self.new binary
+    self.new str
   end
 
   # Get base32 representation of the access code, for sharing with other
   # people.
   def to_s
-    LuhnCheck.generate(Base32.encode(["961a2ff3"].pack('H*') + @payload))
+    Base32.encode(LuhnCheck.generate(@payload))
   end
 end

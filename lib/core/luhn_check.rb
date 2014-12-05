@@ -5,9 +5,9 @@ module LuhnCheck
   def self.generate str
     factor = 2
     sum = 0
-    n = 32
+    n = 256
     str.upcase.reverse.each_char do |char|
-      addend = factor * Base32.ord(char)
+      addend = factor * char.ord
       factor = (factor == 2) ? 1 : 2
       addend = addend / n + addend % n
       sum += addend
@@ -15,13 +15,14 @@ module LuhnCheck
 
     remainder = sum % n
     check_digit = (n - remainder) % n
-    str + Base32.chr(check_digit)
+    str + [check_digit].pack('c')
   end
 
   # Verify that the input has a valid luhn check; if it does, return the string
   # without the check digit, otherwise return false
   def self.verify str
+    str = Base32.decode str
     data = str[0..-2]
-    generate(data) == str.upcase && data
+    generate(data) == str && data
   end
 end
