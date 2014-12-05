@@ -1,3 +1,4 @@
+require_relative 'access_code'
 
 module Core
   def self.init(errors_callback)
@@ -18,11 +19,16 @@ module Core
   end
 
   def self.generate_access_code(peerid, level)
-    return "A NEW ACCESS CODE"
+    ac = AccessCode.create
+    # TODO: @clubs[peerid].add_access_code(ac)
+
+    ac.to_s
   end
 
   def self.join_club(access_code)
-    return "PEERID"
+    # duping in case access_code was passed in from ARGV
+    ac = AccessCode.parse access_code.dup
+    return "MY_PEERID"
   end
 
   def self.list_peers(peerid)
