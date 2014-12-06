@@ -15,27 +15,19 @@ class AccessCode
   #
   # payload  -  a binary string containing the access code's key
   def initialize payload
-    # FIXME check the size
     @payload = payload
   end
 
-  # Create a new Access Code object
-  def self.create
-    payload = SecureRandom.random_bytes 16
-    self.new payload
+  def self.from_channel channel_id, channel_secret
+    self.new channel_id + channel_secret
   end
 
   # Parse an access code in ASCII format.
   # These are BASE32 encoded.
   def self.parse str
-    # Remove psuedo URL prefix, if present
-    str = $' if str =~ /\A\s*clearskies:/i
-
-    raise "Wrong length, should be 33 characters, not #{str.size} characters" unless str.size == 33
+    raise "Wrong length, should be 40 characters, not #{str.size} characters" unless str.size == 40
 
     str.upcase!
-
-    raise "Missing 'SYNC' prefix" unless str =~ /\ASYNC/
 
     # remove check digit
     str = LuhnCheck.verify str
@@ -44,38 +36,12 @@ class AccessCode
 
     binary = Base32.decode str
 
-    # Remove "\x96\x1A\x2F\xF3"
-
-    payload = binary[4..-1]
-
-    self.new payload
-  end
-
-  # Get the ID of the access code.  This is similar to the "Share ID" of a
-  # share, and is used to locate other nodes that have the same access code.
-  def id
-    @id ||= Digest::SHA256.hexdigest(@payload[0...@payload.size/2])
+    self.new binary
   end
 
   # Get base32 representation of the access code, for sharing with other
   # people.
   def to_s
     LuhnCheck.generate(Base32.encode(["961a2ff3"].pack('H*') + @payload))
-  end
-
-  # Get the key material for the access code.  This asks for the desired
-  # access_level so that it behaves in a similar way to the Share class, but
-  # the access_level of an AccessCode is always "unknown".
-  def key type, access_level
-    raise "Invalid type" unless type == :srp_password
-    raise "Invalid access level" unless access_level == :unknown
-    @payload[@payload.size..-1]
-  end
-
-  # Get the access_level of the Access Code.  This is always "unknown", since
-  # access codes don't contain any information about the access level they will
-  # represent.
-  def access_level
-    :unknown
   end
 end
