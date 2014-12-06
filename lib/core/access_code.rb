@@ -21,7 +21,7 @@ class AccessCode
 
   # Create a new Access Code object
   def self.create
-    payload = SecureRandom.random_bytes 16
+    payload = SecureRandom.random_bytes 128/8 # 128 bits/ 8 bits-per-byte
     self.new payload
   end
 
