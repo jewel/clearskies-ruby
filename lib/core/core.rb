@@ -1,9 +1,12 @@
 require_relative 'access_code'
+require_relative 'club'
+require_relative 'key'
 
 module Core
   def self.init(errors_callback)
     @errors_callback = errors_callback
     @type_handlers = {} # must be initailized before calling register_type
+    @clubs = {}
 
     # TODO register the core message handlers
     self.register_type("core.greeting", "some handler")
@@ -18,15 +21,14 @@ module Core
   end
 
   def self.create_club
-    #club = Club.new
-    #@clubs[club.peerid] = club
-    #club.peerid
+    club = Club.new "sample_chat"
+    @clubs[club.peerid] = club
+    club.peerid
   end
 
   def self.generate_access_code(peerid, level)
     ac = AccessCode.create
-    # TODO: @clubs[peerid].add_access_code(ac)
-
+    @clubs[peerid].add_access_code(ac, level)
     ac.to_s
   end
 

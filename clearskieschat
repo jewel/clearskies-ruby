@@ -19,7 +19,7 @@ my_peerid = Core.create_club
 if access_code = ARGV.shift
   Core.join_club(access_code)
 else
-  access_code = Core.generate_access_code my_peerid, :RW
+  access_code = Core.generate_access_code my_peerid, :write
   puts "Please share this access_code with someone else!"
   puts "Access code: #{access_code}"
 end
