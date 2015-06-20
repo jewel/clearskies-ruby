@@ -1,10 +1,11 @@
-require_relative 'channel'
+require_relative '../../test/channel'
 
 module Core
   def self.init(errors_callback)
     @errors_callback = errors_callback
     @type_handlers = {} # must be initailized before calling register_type
     @channels = {}
+    @thread = nil
 
     # TODO register the core message handlers
     self.register_type("core.greeting", "some handler")
@@ -13,10 +14,25 @@ module Core
   end
 
   def self.start
-    
+    @thread = Thread.new do
+      loop do
+        @channels.each do |k,chan|
+          m = chan.read_message
+          if m
+            # TODO: invoke message handler
+            puts "Got message: " + m
+          end
+        end
+        # TODO: upgrade to using select instead of spinning
+        sleep 0.05
+      end
+    end
+    @thread.abort_on_exception = true
   end
 
   def self.stop
+    @thread.kill
+    @thread = nil
   end
 
   def self.create_channel
@@ -37,7 +53,11 @@ module Core
   end
 
   def self.list_peers(channel_id)
-    []
+    @channels[channel_id].list_peers
+  end
+
+  def self.send_message(channel_id, message)
+    @channels[channel_id].send_message message
   end
 
 

@@ -22,6 +22,7 @@ else
   access_code = Core.get_access_code(channel_id)
   puts "Please share this access_code with someone else!"
   puts "Access code: #{access_code}"
+  File.write('/tmp/access_key.txt', access_code)
 end
 
 loop do
@@ -32,7 +33,6 @@ loop do
   end
 
   puts "Sending a message"
-  Core.send_message channel_id, "Saying hello!"
+  Core.send_message channel_id, "Saying hello!\n"
   sleep 3
 end
-
