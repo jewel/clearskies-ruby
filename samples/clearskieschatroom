@@ -6,7 +6,7 @@
 
 ### Start the first without any arguments.  Start the second with the accesscode as an argument.
 
-require_relative 'lib/core/core.rb'
+require_relative '../lib/core/core.rb'
 
 def error_handler(error)
   raise error
