@@ -1,0 +1,12 @@
+#!/bin/bash
+
+trap 'jobs -p | xargs kill' EXIT
+
+unbuffer ./clearskieschat | sed -u 's/^/SERVER: /' &
+
+sleep 1
+unbuffer ./clearskieschat $(cat /tmp/access_key.txt) | sed -u 's/^/CLIENT: /'&
+
+while pgrep -P "$BASHPID" > /dev/null; do
+  wait
+done
